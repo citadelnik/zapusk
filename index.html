@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZAPUSK — Запусти агента. Звільни час. Живи вічно.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --border: #1e1e35;
+    --org: #7c3aed;
+    --digital: #2563eb;
+    --ai: #0d9488;
+    --life: #e63946;
+    --gold: #f4a261;
+    --silver: #64748b;
+    --text: #e2e8f0;
+    --dim: #94a3b8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CUSTOM CURSOR ── */
+  .cursor {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    width: 32px; height: 32px;
+    border: 1px solid rgba(244,162,97,0.4);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.15s, width 0.2s, height 0.2s;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1; opacity: 0.4;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: relative; padding: 40px 24px;
+    text-align: center; overflow: hidden;
+  }
+
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+  @keyframes gridPulse {
+    0%,100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .glow-orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); pointer-events: none;
+    animation: orbFloat 12s ease-in-out infinite;
+  }
+  .orb1 { width:400px;height:400px;background:rgba(124,58,237,0.12);top:-100px;left:-100px; }
+  .orb2 { width:500px;height:500px;background:rgba(230,57,70,0.08);bottom:-150px;right:-150px;animation-delay:-4s; }
+  .orb3 { width:300px;height:300px;background:rgba(13,148,136,0.08);top:40%;left:60%;animation-delay:-8s; }
+  @keyframes orbFloat {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.05); }
+    66% { transform: translate(-20px,30px) scale(0.95); }
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: var(--org); text-transform: uppercase;
+    opacity: 0; animation: fadeUp 0.8s 0.3s forwards;
+    position: relative; z-index: 2;
+  }
+
+  .hero-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(52px, 10vw, 120px);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    margin: 20px 0 0;
+    position: relative; z-index: 2;
+    opacity: 0; animation: fadeUp 0.8s 0.5s forwards;
+  }
+
+  .hero-title .z { color: var(--org); }
+  .hero-title .a { color: var(--digital); }
+  .hero-title .p { color: var(--ai); }
+  .hero-title .usk { color: var(--life); }
+
+  .hero-tagline {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(13px, 2vw, 17px);
+    color: var(--dim);
+    margin: 28px 0 0;
+    letter-spacing: 0.05em;
+    position: relative; z-index: 2;
+    opacity: 0; animation: fadeUp 0.8s 0.7s forwards;
+  }
+
+  .hero-tagline span { color: var(--gold); }
+
+  .domains-bar {
+    display: flex; gap: 8px;
+    margin: 40px 0 0;
+    position: relative; z-index: 2;
+    flex-wrap: wrap; justify-content: center;
+    opacity: 0; animation: fadeUp 0.8s 0.9s forwards;
+  }
+
+  .domain-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.1em;
+    padding: 8px 16px;
+    border-radius: 2px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .domain-pill.org  { border-color: var(--org);     } .domain-pill.org:hover  { background: var(--org);  color:#fff; }
+  .domain-pill.digi { border-color: var(--digital); } .domain-pill.digi:hover { background: var(--digital); color:#fff; }
+  .domain-pill.ai   { border-color: var(--ai);      } .domain-pill.ai:hover   { background: var(--ai);   color:#fff; }
+  .domain-pill.life { border-color: var(--life);    } .domain-pill.life:hover { background: var(--life); color:#fff; }
+
+  .scroll-hint {
+    position: absolute; bottom: 40px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--silver); z-index: 2;
+    animation: scrollBounce 2s ease-in-out infinite;
+    opacity: 0; animation: fadeIn 1s 2s forwards, scrollBounce 2s 2s ease-in-out infinite;
+  }
+  @keyframes scrollBounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(24px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity:0; } to { opacity:1; }
+  }
+
+  /* ── PROBLEM SECTION ── */
+  .section {
+    max-width: 960px; margin: 0 auto;
+    padding: 100px 24px;
+    position: relative; z-index: 2;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.3em;
+    color: var(--silver); text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .problem-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2px; margin: 48px 0;
+  }
+
+  .problem-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px 32px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .problem-card:hover { border-color: var(--life); }
+  .problem-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .problem-card.money::before { background: var(--gold); }
+  .problem-card.death::before { background: var(--life); }
+
+  .problem-icon {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 48px; font-weight: 900;
+    margin-bottom: 16px; display: block;
+    opacity: 0.15;
+  }
+  .problem-card.money .problem-icon { color: var(--gold); }
+  .problem-card.death .problem-icon { color: var(--life); }
+
+  .problem-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .problem-card.money .problem-title { color: var(--gold); }
+  .problem-card.death .problem-title { color: var(--life); }
+
+  .problem-text {
+    font-size: 14px; line-height: 1.7;
+    color: var(--dim);
+  }
+
+  .statement {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(20px, 4vw, 36px);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    padding: 60px 0;
+  }
+  .statement em { color: var(--life); font-style: normal; }
+  .statement strong { color: var(--gold); }
+
+  /* ── ECOSYSTEM ── */
+  .eco-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+
+  .eco-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px; margin-top: 48px;
+  }
+
+  .eco-card {
+    padding: 40px 32px;
+    border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    transition: all 0.4s;
+    cursor: default;
+  }
+  .eco-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .eco-card:hover { transform: translateY(-2px); }
+  .eco-card:hover::after { opacity: 1; }
+
+  .eco-card.org  { background: rgba(124,58,237,0.04); }
+  .eco-card.digi { background: rgba(37,99,235,0.04); }
+  .eco-card.ai   { background: rgba(13,148,136,0.04); }
+  .eco-card.life { background: rgba(230,57,70,0.04); }
+
+  .eco-card.org:hover  { border-color: var(--org);     background: rgba(124,58,237,0.08); }
+  .eco-card.digi:hover { border-color: var(--digital); background: rgba(37,99,235,0.08); }
+  .eco-card.ai:hover   { border-color: var(--ai);      background: rgba(13,148,136,0.08); }
+  .eco-card.life:hover { border-color: var(--life);    background: rgba(230,57,70,0.08); }
+
+  .eco-step {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    margin-bottom: 12px;
+  }
+  .org .eco-step  { color: var(--org); }
+  .digi .eco-step { color: var(--digital); }
+  .ai .eco-step   { color: var(--ai); }
+  .life .eco-step { color: var(--life); }
+
+  .eco-domain {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; margin-bottom: 8px;
+    opacity: 0.6;
+  }
+
+  .eco-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px; font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .org .eco-name  { color: var(--org); }
+  .digi .eco-name { color: var(--digital); }
+  .ai .eco-name   { color: var(--ai); }
+  .life .eco-name { color: var(--life); }
+
+  .eco-desc {
+    font-size: 14px; line-height: 1.7;
+    color: var(--dim); margin-bottom: 20px;
+  }
+
+  .eco-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .eco-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 2px; color: var(--silver);
+  }
+
+  /* ── JOURNEY ── */
+  .journey {
+    padding: 100px 24px;
+    max-width: 960px; margin: 0 auto;
+    position: relative; z-index: 2;
+  }
+
+  .journey-steps {
+    display: flex; flex-direction: column;
+    gap: 0; margin-top: 48px;
+  }
+
+  .journey-step {
+    display: grid; grid-template-columns: 60px 1fr;
+    gap: 24px; padding: 32px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+  .journey-step:hover { opacity: 1; }
+  .journey-step:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 36px; font-weight: 900;
+    opacity: 0.2; line-height: 1;
+    margin-top: 4px;
+  }
+
+  .step-content h3 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .step-content p {
+    font-size: 14px; line-height: 1.7;
+    color: var(--dim);
+  }
+
+  /* ── TOKEN ── */
+  .token-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 100px 24px;
+  }
+
+  .token-inner { max-width: 960px; margin: 0 auto; }
+
+  .token-display {
+    text-align: center;
+    margin: 48px 0;
+  }
+
+  .token-symbol {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(60px, 12vw, 140px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--org), var(--digital), var(--ai), var(--life));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    animation: gradientShift 6s ease-in-out infinite;
+  }
+  @keyframes gradientShift {
+    0%,100% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(30deg); }
+  }
+
+  .token-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 2px; margin-top: 48px;
+  }
+
+  .stat-box {
+    padding: 28px 20px; text-align: center;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .stat-value {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--gold); margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; letter-spacing: 0.15em;
+    color: var(--silver); text-transform: uppercase;
+  }
+
+  /* ── MANIFESTO ── */
+  .manifesto {
+    max-width: 680px; margin: 0 auto;
+    padding: 100px 24px; text-align: center;
+    position: relative; z-index: 2;
+  }
+
+  .manifesto-text {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 300;
+    line-height: 1.5;
+    color: var(--dim);
+    margin-bottom: 20px;
+  }
+  .manifesto-text strong { color: var(--text); font-weight: 700; }
+  .manifesto-text.accent { color: var(--text); }
+  .manifesto-text.big {
+    font-size: clamp(24px, 4vw, 40px);
+    font-weight: 900; color: var(--gold);
+  }
+
+  /* ── CTA ── */
+  .cta-section {
+    padding: 100px 24px;
+    text-align: center;
+    position: relative; z-index: 2;
+    overflow: hidden;
+  }
+
+  .cta-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(32px, 6vw, 72px);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .cta-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px; letter-spacing: 0.1em;
+    color: var(--silver); margin-bottom: 48px;
+  }
+
+  .cta-buttons {
+    display: flex; gap: 16px;
+    justify-content: center; flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 16px 32px;
+    border: none; cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: var(--org);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #6d28d9; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(124,58,237,0.4); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    text-align: center;
+    position: relative; z-index: 2;
+  }
+
+  .footer-domains {
+    display: flex; gap: 24px;
+    justify-content: center; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .footer-domain {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; color: var(--silver);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .footer-domain:hover { color: var(--gold); }
+
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; color: var(--border);
+    letter-spacing: 0.2em;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px; background: var(--border);
+    margin: 0; position: relative; z-index: 2;
+  }
+
+  /* ── COUNTER ── */
+  .counter-row {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 2px; margin: 80px 0 0;
+  }
+  .counter-item {
+    padding: 40px; text-align: center;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .counter-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 40px; font-weight: 900;
+    color: var(--text); display: block;
+  }
+  .counter-num span { color: var(--org); }
+  .counter-lbl {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--silver); text-transform: uppercase;
+    margin-top: 8px; display: block;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .problem-grid, .eco-grid, .token-stats, .counter-row {
+      grid-template-columns: 1fr;
+    }
+    .journey-step { grid-template-columns: 40px 1fr; }
+  }
+
+  /* ── SCROLL REVEAL ── */
+  .reveal {
+    opacity: 0; transform: translateY(32px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    overflow: hidden; white-space: nowrap;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+    background: var(--surface);
+    position: relative; z-index: 2;
+  }
+  .ticker-inner {
+    display: inline-flex; gap: 0;
+    animation: ticker 30s linear infinite;
+  }
+  .ticker-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; letter-spacing: 0.15em;
+    color: var(--silver); padding: 0 40px;
+  }
+  .ticker-item .dot { color: var(--org); margin: 0 8px; }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="grid-bg"></div>
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="glow-orb orb3"></div>
+
+  <p class="hero-eyebrow">Seed Round 2025 &nbsp;·&nbsp; Anonymous Founder &nbsp;·&nbsp; Confidential</p>
+
+  <h1 class="hero-title">
+    <span class="z">Z</span><span class="a">A</span><span class="p">P</span><span class="usk">USK</span>
+  </h1>
+
+  <p class="hero-tagline">
+    <span>Запусти агента.</span> &nbsp;Звільни час. &nbsp;Живи вічно.
+  </p>
+
+  <div class="domains-bar">
+    <a href="#ecosystem" class="domain-pill org">zapusk.org</a>
+    <a href="#ecosystem" class="domain-pill digi">zapusk.digital</a>
+    <a href="#ecosystem" class="domain-pill ai">zapusk.ai</a>
+    <a href="#ecosystem" class="domain-pill life">zapusk.life</a>
+  </div>
+
+  <p class="scroll-hint">↓ &nbsp; SCROLL</p>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span class="ticker-item">ЗАПУСТИ АГЕНТА <span class="dot">◆</span></span>
+    <span class="ticker-item">ЗВІЛЬНИ ЧАС <span class="dot">◆</span></span>
+    <span class="ticker-item">ЖИВИ ВІЧНО <span class="dot">◆</span></span>
+    <span class="ticker-item">$ZPSK TOKEN <span class="dot">◆</span></span>
+    <span class="ticker-item">DECENTRALIZED AI <span class="dot">◆</span></span>
+    <span class="ticker-item">300M СЛОВ'ЯН <span class="dot">◆</span></span>
+    <span class="ticker-item">RADICAL IMMORTALITY <span class="dot">◆</span></span>
+    <span class="ticker-item">DAO GOVERNANCE <span class="dot">◆</span></span>
+    <span class="ticker-item">SEED ROUND OPEN <span class="dot">◆</span></span>
+    <span class="ticker-item">ЗАПУСТИ АГЕНТА <span class="dot">◆</span></span>
+    <span class="ticker-item">ЗВІЛЬНИ ЧАС <span class="dot">◆</span></span>
+    <span class="ticker-item">ЖИВИ ВІЧНО <span class="dot">◆</span></span>
+    <span class="ticker-item">$ZPSK TOKEN <span class="dot">◆</span></span>
+    <span class="ticker-item">DECENTRALIZED AI <span class="dot">◆</span></span>
+    <span class="ticker-item">300M СЛОВ'ЯН <span class="dot">◆</span></span>
+    <span class="ticker-item">RADICAL IMMORTALITY <span class="dot">◆</span></span>
+    <span class="ticker-item">DAO GOVERNANCE <span class="dot">◆</span></span>
+    <span class="ticker-item">SEED ROUND OPEN <span class="dot">◆</span></span>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<section class="section">
+  <p class="section-label reveal">// ПРОБЛЕМА</p>
+  <h2 class="eco-title reveal">Людину можна зламати<br>двома способами</h2>
+
+  <div class="problem-grid reveal">
+    <div class="problem-card money">
+      <span class="problem-icon">$</span>
+      <h3 class="problem-title">ГРОШІ</h3>
+      <p class="problem-text">Контролюй чиї гроші — контролюй людину. Робота заради виживання. Борги. Залежність від системи. Більшість людей на планеті не може дозволити собі не працювати навіть один місяць.</p>
+    </div>
+    <div class="problem-card death">
+      <span class="problem-icon">†</span>
+      <h3 class="problem-title">СМЕРТЬ</h3>
+      <p class="problem-text">Погрожуй смертю — і людина зробить все що завгодно. Вся система влади тримається на цьому страху. Уряди. Корпорації. Злочинці. Завжди трималась. Досі.</p>
+    </div>
+  </div>
+
+  <div class="statement reveal">
+    Вся людська <em>історія</em> — маніпуляція<br>
+    цими двома важелями.<br>
+    <strong>Zapusk прибирає обидва.</strong>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ECOSYSTEM -->
+<section class="section" id="ecosystem">
+  <p class="section-label reveal">// ЕКОСИСТЕМА</p>
+  <h2 class="eco-title reveal">Чотири домени.<br>Один шлях.</h2>
+
+  <div class="eco-grid reveal">
+    <div class="eco-card org">
+      <p class="eco-step">КРОК 01 &nbsp;·&nbsp; ЗНАЙШОВ</p>
+      <p class="eco-domain">zapusk.org</p>
+      <h3 class="eco-name">РУХ / DAO</h3>
+      <p class="eco-desc">Ідеологічне серце. Маніфест. DAO управляє протоколом через голосування. Фундація фінансує науку безсмертя. Це не компанія — це рух людей що вирішили більше не бути вразливими.</p>
+      <div class="eco-tags">
+        <span class="eco-tag">DAO GOVERNANCE</span>
+        <span class="eco-tag">МАНІФЕСТ</span>
+        <span class="eco-tag">ГРАНТИ</span>
+        <span class="eco-tag">СПІЛЬНОТА</span>
+      </div>
+    </div>
+
+    <div class="eco-card digi">
+      <p class="eco-step">КРОК 02 &nbsp;·&nbsp; ЗАЙШОВ</p>
+      <p class="eco-domain">zapusk.digital</p>
+      <h3 class="eco-name">ONBOARDING</h3>
+      <p class="eco-desc">Широкі двері для мільйонів. Реєстрація за 2 хвилини. Перший агент за 5 хвилин. Без seed-фраз, без технічних знань. Простий як Telegram — для всіх 300 мільйонів.</p>
+      <div class="eco-tags">
+        <span class="eco-tag">ПРОСТИЙ UI</span>
+        <span class="eco-tag">БЕЗ КОДУ</span>
+        <span class="eco-tag">МОБІЛЬНИЙ</span>
+        <span class="eco-tag">МУЛЬТИМОВНИЙ</span>
+      </div>
+    </div>
+
+    <div class="eco-card ai">
+      <p class="eco-step">КРОК 03 &nbsp;·&nbsp; ЗАРОБЛЯЄ</p>
+      <p class="eco-domain">zapusk.ai</p>
+      <h3 class="eco-name">AI АГЕНТИ</h3>
+      <p class="eco-desc">Marketplace AI-агентів що заробляють токени поки ти спиш. Децентралізована compute-мережа. Телефон, ноутбук, сервер — кожен пристрій стає вузлом. Двигун що ніколи не зупиняється.</p>
+      <div class="eco-tags">
+        <span class="eco-tag">AI AGENTS</span>
+        <span class="eco-tag">COMPUTE MINING</span>
+        <span class="eco-tag">$ZPSK</span>
+        <span class="eco-tag">ПАСИВНИЙ ДОХІД</span>
+      </div>
+    </div>
+
+    <div class="eco-card life">
+      <p class="eco-step">КРОК 04 &nbsp;·&nbsp; ЖИВЕ ВІЧНО</p>
+      <p class="eco-domain">zapusk.life</p>
+      <h3 class="eco-name">БЕЗСМЕРТЯ</h3>
+      <p class="eco-desc">Кінцева ціль. 20% емісії $ZPSK йде в Longevity Fund — реальні наукові дослідження. Учасники мережі стають акціонерами місії безсмертя. Відповідь на питання НАВІЩО.</p>
+      <div class="eco-tags">
+        <span class="eco-tag">LONGEVITY FUND</span>
+        <span class="eco-tag">НАУКОВІ ГРАНТИ</span>
+        <span class="eco-tag">DIGITAL SOUL</span>
+        <span class="eco-tag">RADICAL IMMORTALITY</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TOKEN -->
+<div class="token-section">
+  <div class="token-inner">
+    <p class="section-label reveal">// ТОКЕН</p>
+    <div class="token-display reveal">
+      <div class="token-symbol">$ZPSK</div>
+    </div>
+
+    <div class="token-stats reveal">
+      <div class="stat-box">
+        <div class="stat-value">1B</div>
+        <div class="stat-label">Фіксована емісія</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">$5–8M</div>
+        <div class="stat-label">Seed Valuation FDV</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">10%</div>
+        <div class="stat-label">Burn від комісій</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value">20%</div>
+        <div class="stat-label">Longevity Fund</div>
+      </div>
+    </div>
+
+    <div class="counter-row reveal">
+      <div class="counter-item">
+        <span class="counter-num">300<span>M</span></span>
+        <span class="counter-lbl">Потенційна аудиторія</span>
+      </div>
+      <div class="counter-item">
+        <span class="counter-num">$0<span></span></span>
+        <span class="counter-lbl">Прямих конкурентів у ніші</span>
+      </div>
+      <div class="counter-item">
+        <span class="counter-num">4<span></span></span>
+        <span class="counter-lbl">Домени екосистеми</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANIFESTO -->
+<section class="manifesto">
+  <p class="section-label reveal" style="text-align:center">//&nbsp;МАНІФЕСТ</p>
+
+  <p class="manifesto-text reveal">Людину контролюють двома способами —</p>
+  <p class="manifesto-text reveal"><strong>грошима і смертю.</strong></p>
+  <br>
+  <p class="manifesto-text reveal">Якщо твій агент заробляє поки ти спиш —</p>
+  <p class="manifesto-text reveal"><strong>ти вільний від першого важеля.</strong></p>
+  <br>
+  <p class="manifesto-text reveal">Якщо ти безсмертний —</p>
+  <p class="manifesto-text reveal"><strong>ти вільний від другого.</strong></p>
+  <br><br>
+  <p class="manifesto-text big reveal">Zapusk — це обидва.</p>
+</section>
+
+<div class="divider"></div>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-bg"></div>
+  <h2 class="cta-title reveal">
+    Є два типи людей.<br>
+    <span style="color:var(--life)">«Я міг зайти першим.»</span><br>
+    <span style="color:var(--gold)">І ті що зайшли.</span>
+  </h2>
+  <p class="cta-sub reveal">Seed Round відкритий &nbsp;·&nbsp; $500K – $1M &nbsp;·&nbsp; $ZPSK &nbsp;·&nbsp; 2025</p>
+  <div class="cta-buttons reveal">
+    <a href="mailto:hello@zapusk.ai" class="btn btn-primary">Зв'язатись з командою</a>
+    <a href="https://github.com" class="btn btn-secondary">GitHub →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-domains">
+    <a href="#" class="footer-domain" style="color:var(--org)">zapusk.org</a>
+    <a href="#" class="footer-domain" style="color:var(--digital)">zapusk.digital</a>
+    <a href="#" class="footer-domain" style="color:var(--ai)">zapusk.ai</a>
+    <a href="#" class="footer-domain" style="color:var(--life)">zapusk.life</a>
+  </div>
+  <p class="footer-copy">© 2025 ZAPUSK PROTOCOL &nbsp;·&nbsp; ANONYMOUS &nbsp;·&nbsp; DECENTRALIZED &nbsp;·&nbsp; IMMORTAL</p>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    cursor.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;
+  });
+  function animRing(){
+    rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+    ring.style.transform=`translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+  document.querySelectorAll('a,button,.eco-card,.domain-pill').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ ring.style.width='56px'; ring.style.height='56px'; ring.style.borderColor='rgba(244,162,97,0.8)'; });
+    el.addEventListener('mouseleave',()=>{ ring.style.width='32px'; ring.style.height='32px'; ring.style.borderColor='rgba(244,162,97,0.4)'; });
+  });
+
+  // Scroll reveal
+  const revEls = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{
+      if(e.isIntersecting){
+        setTimeout(()=>e.target.classList.add('visible'), i*80);
+        obs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.1});
+  revEls.forEach(el=>obs.observe(el));
+
+  // Animated counters
+  function animCount(el, target, suffix=''){
+    let start=0;
+    const step = target/60;
+    const timer = setInterval(()=>{
+      start+=step;
+      if(start>=target){ start=target; clearInterval(timer); }
+      el.innerHTML = Math.floor(start) + suffix;
+    },16);
+  }
+  const countObs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const nums = e.target.querySelectorAll('.counter-num');
+        nums[0].innerHTML='<span style="color:var(--org)">...</span>';
+        setTimeout(()=>{ nums[0].innerHTML='300<span style="color:var(--org)">M</span>'; },800);
+        nums[1].innerHTML='0';
+        nums[2].innerHTML='0';
+        setTimeout(()=>animCount(nums[2],4),400);
+        countObs.unobserve(e.target);
+      }
+    });
+  },{threshold:0.3});
+  const counterRow = document.querySelector('.counter-row');
+  if(counterRow) countObs.observe(counterRow);
+</script>
+</body>
+</html>
